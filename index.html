@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>若中 連絡</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#fff;--fg:#000;--ac:#841D20;--gr:#E4E4E4;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--fg:#fff;--gr:#2B2B2B}}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:520px;background:var(--bg);color:var(--fg);font:15px/1.6 "Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+.hd{background:var(--ac);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 18px;display:flex;justify-content:space-between;align-items:flex-end}
+.ti{font:700 24px "Noto Serif JP",serif}
+.sm{font-size:12px}
+.p{padding:14px 16px 24px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,input{font:inherit;color:var(--fg)}
+.chip{min-height:44px;padding:0 14px;border:1px solid var(--fg);background:var(--bg);border-radius:22px}
+.chip.on,.btn.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn{min-height:44px;padding:0 14px;border:2px solid var(--fg);background:var(--bg);border-radius:6px;font-weight:700}
+.btn.sub{width:100%;background:var(--fg);color:var(--bg);margin-top:4px}
+.btn:disabled{opacity:.35}
+.card{border:1px solid var(--fg);padding:12px;margin-bottom:10px;border-radius:6px;cursor:pointer}
+.ct{font:700 17px "Noto Serif JP",serif;margin:6px 0 2px}
+.tg{display:inline-block;font-size:12px;border:1px solid var(--fg);padding:0 8px;margin-right:4px;border-radius:3px}
+.tg.k{background:var(--fg);color:var(--bg)}
+.pin{display:inline-block;font-size:12px;background:var(--ac);color:#fff;padding:0 8px;margin-right:4px;border-radius:3px}
+.st{display:inline-block;margin-top:6px;padding:0 10px;font-size:13px;border-radius:12px;border:1px solid var(--fg)}
+.st.ng{background:var(--ac);color:#fff;border-color:var(--ac)}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.g .w{grid-column:1/3}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+textarea,select{font:inherit;color:var(--fg)}
+input[type=text],input[type=time],input[type=password],input[type=date],input[type=datetime-local],textarea,select{width:100%;min-height:44px;border:1px solid var(--fg);background:var(--bg);padding:0 8px;border-radius:6px;margin:4px 0 10px}
+.row input{width:auto;flex:1;min-width:0;margin:0}
+h3{font:700 15px "Noto Serif JP",serif;margin:18px 0 6px;border-bottom:2px solid var(--ac);padding-bottom:2px}
+.li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--fg);padding:4px 0;font-size:14px}
+.memo{border-left:4px solid var(--ac);padding:2px 10px;margin:6px 0}
+.note{background:var(--ac);color:#fff;padding:12px;margin-bottom:12px;border-radius:6px}
+.note .btn{background:#fff;color:#000;border-color:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.day{min-height:52px;border:1px solid var(--fg);background:var(--bg);border-radius:4px;padding:2px}
+.day.on{outline:3px solid var(--ac)}
+.dots{display:block;min-height:12px}
+.dots i{display:inline-block;width:10px;height:10px;border-radius:50%;margin:1px}
+i.f{background:var(--ac)}
+i.o{border:2px solid var(--fg)}
+.ic{flex:none;min-width:44px;min-height:44px;border:1px solid var(--fg);background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.nav{position:sticky;bottom:0;display:flex;background:var(--bg);border-top:2px solid var(--fg)}
+.nav button{flex:1;min-height:52px;border:0;background:none;font-weight:700}
+.nav .on{background:var(--ac);color:#fff}
+.adm{background:var(--gr);border-radius:8px;padding:12px;margin-top:24px}
+.ac{background:var(--bg);border:1px solid var(--fg);border-radius:6px;padding:12px;margin-top:12px}
+#er{color:var(--ac);font-weight:700;min-height:1.6em}
+</style>
+</head>
+<body>
+<div id="app"><div class="p">読み込み中...</div></div>
+<script>
+// ▼ Supabaseの接続情報（公開してよいキーのみ）
+const SB_URL='https://trpyqxcsycxkdxpxdbzu.supabase.co';
+const SB_KEY='sb_publishable_f19GqAGJqWy8xbyIeIS4kg_8erZ6gme';
+const db=supabase.createClient(SB_URL,SB_KEY);
+const A=document.getElementById('app');
+const S={tab:'h',cm:(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})(),day:'',fm:'',ft:'',fc:0,notices:[],log:[],me:null,uid:null,members:[],topics:[],resp:[],memos:[],tag:'',open:null,pend:{},flt:'',mode:'reg'};
+const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const er=m=>{const x=document.getElementById('er');if(x)x.textContent=m||''};
+const dtm=s=>new Date(s).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const evt=t=>t.event_date?`${+t.event_date.slice(5,7)}/${+t.event_date.slice(8,10)}${t.start_time?' '+t.start_time.slice(0,5)+'～'+(t.end_time||'').slice(0,5):''}`:'';
+const gp=r=>['参加','一部参加','終了次第参加'].includes(r.status)?'参加':r.status=='不参加'?'不参加':'他';
+const ansOf=t=>S.resp.filter(x=>x.topic_id==t.id);
+const mine=t=>S.resp.find(x=>x.topic_id==t.id&&x.member_id==S.me.id);
+const nm=id=>{const m=S.members.find(x=>x.id==id);return m?m.name_kanji:'?'};
+const closed=t=>t.deadline&&new Date()>new Date(t.deadline);
+
+async function boot(){
+ try{
+  let {data:{session}}=await db.auth.getSession();
+  if(!session){const r=await db.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
+  S.uid=session.user.id;await load();
+ }catch(x){A.innerHTML=`<div class="p"><b>接続に失敗しました</b><p>${e(x.message||x)}</p></div>`}
+}
+async function load(){
+ const [m,t,r,o,n,l]=await Promise.all([db.from('members').select('*'),db.from('topics').select('*').order('created_at',{ascending:false}),db.from('responses').select('*'),db.from('topic_memos').select('*').order('created_at'),db.from('notices').select('*').eq('dismissed',false).order('created_at',{ascending:false}),db.from('activity_log').select('*').order('created_at',{ascending:false}).limit(200)]);
+ if(m.error)throw m.error;
+ S.members=m.data||[];S.me=S.members.find(x=>x.user_id==S.uid)||null;
+ S.topics=t.data||[];S.resp=r.data||[];S.memos=o.data||[];S.notices=n.data||[];S.log=l.data||[];view();
+}
+function reg(){
+ if(S.mode=='claim')return `<div class="p"><h3>端末を変更した方</h3><p class="sm">管理者から受け取ったコードを入力してください。</p><input type="text" id="cc" placeholder="コード"><div id="er"></div><button class="btn on" data-a="claim">この端末で使う</button> <button class="btn" data-a="mode" data-v="reg">戻る</button></div>`;
+ return `<div class="p"><h3>はじめての登録</h3><p class="sm">合言葉は顔合わせで案内します。本名で入力してください。</p>
+ 合言葉<input type="password" id="rp">本名（漢字）<input type="text" id="rk" placeholder="例: 山田 太郎">本名（ひらがな）<input type="text" id="rn" placeholder="例: やまだ たろう">年齢<input type="text" inputmode="numeric" id="rg" placeholder="例: 22">
+ <div id="er"></div><button class="btn on" data-a="reg">登録する</button><p><button class="btn" data-a="mode" data-v="claim">端末を変更した方はこちら</button></p></div>`;
+}
+function home(){
+ const tags=[...new Set(S.topics.filter(x=>x.kind!='practice').flatMap(x=>x.tags||[]))];
+ const chips=['',...tags].map(g=>`<button class="chip ${S.tag===g?'on':''}" data-a="tag" data-v="${e(g)}">${g?e(g):'すべて'}</button>`).join('');
+ const L=S.topics.filter(x=>x.kind!='practice'&&(!S.tag||(x.tags||[]).includes(S.tag))).sort((a,b)=>b.pinned-a.pinned);
+ return `<div class="p">${notes()}<div class="chips">${chips}</div>`+(L.map(x=>{const m=mine(x);
+  return `<div class="card" data-a="open" data-v="${x.id}">${x.pinned?'<span class="pin">固定</span>':''}<span class="tg k">${x.kind=='info'?'連絡':'出欠'}</span>${(x.tags||[]).map(g=>`<span class="tg">${e(g)}</span>`).join('')}<div class="ct">${e(x.title)}</div>${x.event_date?`<div class="sm">開催 ${evt(x)}</div>`:''}<div class="sm">${x.deadline?'回答期限 '+dtm(x.deadline)+'　':''}${ansOf(x).length}/${S.members.filter(y=>y.active).length}人が回答</div><span class="st ${m?'':'ng'}">${m?'あなた: '+e(m.status):'未回答'}</span></div>`}).join('')||'<p>トピックはまだありません。</p>')+'</div>';
+}
+function ui(t){
+ const m=mine(t);
+ if(t.kind=='info'&&m)return '<span class="st">見た（確認済み・変更できません）</span>';
+ if(closed(t))return `<span class="st ${m?'':'ng'}">${m?'回答済み: '+e(m.status):'未回答'}</span><p class="sm">回答期限を過ぎています。変更が必要なときは管理者に連絡してください。</p>`;
+ const c=S.pend[t.id]||'',o=t.kind=='info'?['見た']:['参加','不参加','一部参加','終了次第参加','その他'];
+ const b=o.map(v=>`<button class="btn ${c==v?'on':''} ${v=='その他'?'w':''}" data-a="pick" data-v="${v}" data-t="${t.id}">${v}</button>`).join('');
+ let i='';
+ if(c=='一部参加')i=`<div class="row"><input type="time" id="f${t.id}" value="${(t.start_time||'18:00').slice(0,5)}"> ～ <input type="time" id="e${t.id}" value="${(t.end_time||'21:00').slice(0,5)}"></div>`;
+ if(c=='その他')i=`<div class="row"><input type="text" id="x${t.id}" placeholder="内容を入力"></div>`;
+ return `<span class="st ${m?'':'ng'}">${m?'回答済み: '+e(m.status+(m.detail?' '+m.detail:'')):'未回答'}</span><div class="g">${b}</div>${i}<div class="sm">${c?'「'+c+'」で送信します':'選んでから送信してください'}</div><div id="er"></div><button class="btn sub" data-a="submit" data-t="${t.id}" ${c?'':'disabled'}>${m?'回答を変更する':'回答する'}</button>`;
+}
+function detail(t){
+ const an=ansOf(t),n=k=>an.filter(x=>gp(x)==k).length;
+ const fl=t.kind!='info'?'<div class="chips">'+[['','すべて',an.length],['参加','参加',n('参加')],['不参加','不参加',n('不参加')]].map(c=>`<button class="chip ${S.flt===c[0]?'on':''}" data-a="flt" data-v="${c[0]}">${c[1]} ${c[2]}</button>`).join('')+'</div>':'';
+ const rows=an.filter(x=>!S.flt||gp(x)==S.flt).map(x=>{const m=S.members.find(y=>y.id==x.member_id);return `<div class="li"><span>${e(m?m.name_kanji:'?')}${m&&m.age?'（'+m.age+'歳）':''}</span><b>${e(x.status+(x.detail?' '+x.detail:''))}</b></div>`}).join('');
+ const no=S.members.filter(m=>m.active&&!an.some(x=>x.member_id==m.id)).map(m=>e(m.name_kanji)).join('、')||'なし';
+ const memo=S.memos.filter(x=>x.topic_id==t.id).map(y=>`<div class="memo"><div class="sm">${dtm(y.created_at)} 追記</div>${e(y.body)}</div>`).join('')||'<p class="sm">まだありません。</p>';
+ return `<div class="p"><button class="btn" data-a="back">戻る</button><div class="ct">${e(t.title)}</div>${t.event_date?`<div class="sm">開催 ${evt(t)}</div>`:''}<div class="sm">${t.deadline?'回答期限 '+dtm(t.deadline)+'（期限まで変更できます）':'回答期限なし'}</div><p style="white-space:pre-wrap">${e(t.body)}</p>
+ <h3>あなたの回答</h3>${ui(t)}<h3>未回答の人</h3><p>${no}</p><h3>回答一覧</h3>${fl}${rows||'<p class="sm">まだありません。</p>'}<h3>メモ</h3>${memo}${S.me.is_admin?adm(t):''}</div>`;
+}
+function notes(){
+ return S.notices.map(n=>`<div class="note"><b>お知らせ</b><div style="white-space:pre-wrap">${e(n.message)}</div><div class="row"><button class="btn" data-a="open" data-v="${n.topic_id}">回答を見直す</button><button class="btn" data-a="ok" data-v="${n.id}">確認した</button></div></div>`).join('');
+}
+function cal(){
+ const [y,mo]=S.cm.split('-').map(Number),f=new Date(y,mo-1,1).getDay(),dim=new Date(y,mo,0).getDate();
+ let c=['日','月','火','水','木','金','土'].map(w=>`<b class="sm">${w}</b>`).join('')+'<span></span>'.repeat(f);
+ for(let d=1;d<=dim;d++){const k=`${S.cm}-${String(d).padStart(2,'0')}`;
+  c+=`<button class="day ${S.day==k?'on':''}" data-a="day" data-v="${k}">${d}<span class="dots">${S.topics.filter(x=>x.event_date==k).slice(0,3).map(x=>`<i class="${mine(x)?'o':'f'}"></i>`).join('')}</span></button>`}
+ const it=S.topics.filter(x=>x.event_date==S.day).sort((a,b)=>(a.start_time||'')>(b.start_time||'')?1:-1);
+ const ic='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+ const p=!S.day?'<p class="sm">日付をタップすると予定が表示されます。</p>':it.length?it.map(x=>{const m=mine(x);
+  return `<div class="card" style="cursor:default"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;margin:0"><div><span class="tg k">${x.kind=='practice'?'定期':'トピック'}</span><div class="ct">${e(x.title)}</div><div class="sm">${x.start_time?x.start_time.slice(0,5)+'～'+(x.end_time||'').slice(0,5):'時間未設定'}</div></div>${x.cal_answerable?`<button class="ic" data-a="open" data-v="${x.id}" aria-label="詳細を開く">${ic}</button>`:''}</div>`+(x.cal_answerable?ui(x):`<span class="st ${m?'':'ng'}">${m?'あなた: '+e(m.status):'未回答'}</span><br><button class="btn on" style="margin-top:8px" data-a="open" data-v="${x.id}">詳細を開いて回答</button>`)+'</div>'}).join(''):'<p class="sm">この日の予定はありません。</p>';
+ return `<div class="p"><div class="row"><button class="btn" data-a="mo" data-v="-1">前月</button><b class="ct" style="flex:1;text-align:center;margin:0">${y}年${mo}月</b><button class="btn" data-a="mo" data-v="1">翌月</button></div><div class="cal">${c}</div><p class="sm">● 塗りつぶし＝未回答　○ 白抜き＝回答済み</p>${p}</div>`;
+}
+function nlog(){
+ const dd=t=>t.event_date?`（${+t.event_date.slice(5,7)}/${+t.event_date.slice(8,10)}）`:'';
+ const tn=l=>{const t=S.topics.find(x=>x.id==l.topic_id);return t?t.title+dd(t):(l.topic_title||'削除されたトピック')};
+ const ad=l=>'管理者の'+nm(l.member_id)+'さん';
+ const msg=l=>({answered:()=>`${nm(l.member_id)}さんが「${tn(l)}」に回答しました`,changed:()=>`${nm(l.member_id)}さんが「${tn(l)}」の回答を変更しました`,admin_edit:()=>`${ad(l)}が「${tn(l)}」の出欠を編集しました（${nm(l.target_member)}さん: ${l.note||''}）`,date_changed:()=>`「${tn(l)}」の日時が変更されました（${l.note||''}）`,memo:()=>`${ad(l)}が「${tn(l)}」にメモを追加しました（${l.note||''}）`,topic_edited:()=>`${ad(l)}が「${tn(l)}」を修正しました（${l.note||''}）`,topic_deleted:()=>`${ad(l)}が「${l.note||l.topic_title||''}」を削除しました`}[l.kind]||(()=>''))();
+ const ch=['admin_edit','date_changed','topic_edited','topic_deleted'];
+ const L=S.log.filter(l=>(!S.fm||l.member_id==S.fm)&&(!S.ft||l.topic_id==S.ft)&&(!S.fc||ch.includes(l.kind)));
+ const mo='<option value="">メンバー: すべて</option>'+S.members.map(m=>`<option value="${m.id}" ${S.fm==m.id?'selected':''}>${e(m.name_kanji)}</option>`).join('');
+ const to='<option value="">トピック: すべて</option>'+S.topics.map(t=>`<option value="${t.id}" ${S.ft==t.id?'selected':''}>${e(t.title)}${dd(t)}</option>`).join('');
+ return `<div class="p"><h3>通知一覧</h3><select data-f="fm">${mo}</select><select data-f="ft">${to}</select><button class="chip ${S.fc?'on':''}" data-a="fc">変更のみ</button><div style="margin-top:8px">`+(L.map(l=>`<div class="li"><span>${ch.includes(l.kind)?'<span class="pin">変更</span>':''}${e(msg(l))}</span><span class="sm">${dtm(l.created_at)}</span></div>`).join('')||'<p class="sm">まだありません。</p>')+'</div></div>';
+}
+const nav=()=>`<nav class="nav">${[['h','ホーム'],['c','カレンダー'],['n','通知'],['m','メンバー']].map(c=>`<button class="${S.tab==c[0]&&!S.open&&S.page!='admin'?'on':''}" data-a="tab" data-v="${c[0]}">${c[1]}</button>`).join('')}</nav>`;
+const bad=r=>{if(r.error){alert(r.error.message);return true}};
+function adminPage(){
+ const mem=S.members.filter(m=>m.active).map(m=>`<div class="li"><span>${e(m.name_kanji)}${m.age?'（'+m.age+'歳）':''}${m.is_admin?' <span class="pin">管理者</span>':''}</span><span class="row" style="margin:0"><button class="btn" data-a="mkadm" data-v="${m.id}" data-x="${m.is_admin?0:1}">${m.is_admin?'管理者を外す':'管理者にする'}</button><button class="btn" data-a="rec" data-v="${m.id}">再ログイン用コード</button></span></div>`).join('');
+ return `<div class="p"><button class="btn" data-a="adm">ホームに戻る</button><div class="adm"><h3 style="margin-top:0">管理者ページ</h3>
+ <div class="ac"><b>トピックを作る</b><br>種類<select id="nk"><option value="attend">出欠（参加・不参加などを回答）</option><option value="info">連絡（「見た」だけ）</option><option value="practice">定期練習（カレンダー専用・開催日が必要）</option></select>
+ タイトル<input type="text" id="nt">本文<textarea id="nb" rows="4"></textarea>
+ タグ（カンマ区切り）<input type="text" id="ng" placeholder="例: 祭り本番,出欠">
+ 回答期限（なしも可）<input type="datetime-local" id="nd">
+ 開催日（なしも可）<input type="date" id="ne"><div class="row"><input type="time" id="ns"> ～ <input type="time" id="nf"></div>
+ <label class="sm"><input type="checkbox" id="np"> ホームの一番上に固定</label>
+ <div id="er"></div><button class="btn on" data-a="mk">作成する</button></div>
+ <div class="ac"><b>メンバーの管理（${S.members.filter(m=>m.active).length}人）</b>${mem}<div id="rc"></div></div></div></div>`;
+}
+function adm(t){
+ const opts=S.members.filter(m=>m.active).map(m=>`<option value="${m.id}">${e(m.name_kanji)}</option>`).join('');
+ const st=['参加','不参加','一部参加','終了次第参加','その他','見た'].map(v=>`<option>${v}</option>`).join('');
+ return `<div class="adm"><h3 style="margin-top:0">管理者メニュー</h3>
+ <div class="ac"><b>タイトル・本文の修正</b><input type="text" id="et" value="${e(t.title)}"><textarea id="eb" rows="4">${e(t.body)}</textarea><button class="btn on" data-a="tedit" data-t="${t.id}">修正を保存</button></div>
+ <div class="ac"><b>表示の設定</b><div class="row"><button class="btn" data-a="pin" data-t="${t.id}">${t.pinned?'固定を外す':'ホーム上部に固定'}</button><label class="sm"><input type="checkbox" data-a="calsw" data-t="${t.id}" ${t.cal_answerable?'checked':''}> カレンダーから直接回答</label></div></div>
+ <div class="ac"><b>メモの追記</b>（全員にお知らせが出ます）<div class="row"><input type="text" id="mm" placeholder="メモを入力"><button class="btn on" data-a="memoadd" data-t="${t.id}">追記</button></div></div>
+ <div class="ac"><b>開催日時の変更</b>（回答済みの人にお知らせが出ます）<div class="row"><input type="date" id="dd" value="${t.event_date||''}"><input type="time" id="s1" value="${(t.start_time||'').slice(0,5)}"><input type="time" id="e1" value="${(t.end_time||'').slice(0,5)}"></div><button class="btn on" data-a="dt" data-t="${t.id}">日時を保存</button></div>
+ <div class="ac"><b>出欠の手動編集</b>（期限後もできます）<select id="am">${opts}</select><select id="as">${st}</select><input type="text" id="ad" placeholder="詳細（時間や理由など。なしも可）"><button class="btn on" data-a="aset" data-t="${t.id}">この内容で保存</button></div>
+ <div class="ac"><button class="btn" data-a="tdel" data-t="${t.id}">このトピックを削除</button></div></div>`;
+}
+function memberView(){
+ const me=S.me,L=S.members.filter(m=>m.active).sort((a,b)=>(a.name_kana||'').localeCompare(b.name_kana||'','ja'));
+ return `<div class="p"><div class="card" style="cursor:default"><b>自分のプロフィール</b>名前（漢字）<input type="text" id="pk" value="${e(me.name_kanji)}">名前（ひらがな）<input type="text" id="pn" value="${e(me.name_kana)}">年齢<input type="text" inputmode="numeric" id="pa" value="${me.age||''}">一言メモ（任意・100文字まで）<input type="text" id="pb" maxlength="100" value="${e(me.bio||'')}"><button class="btn on" data-a="psave">保存する</button></div>
+ <h3>メンバー（${L.length}人）</h3>`+L.map(m=>`<div class="card" style="cursor:default"><b>${e(m.name_kanji)}</b> <span class="sm">${e(m.name_kana)}</span>${m.age?` <span class="sm">${m.age}歳</span>`:''}${m.is_admin?' <span class="pin">管理者</span>':''}${m.bio?`<div class="sm" style="white-space:pre-wrap">${e(m.bio)}</div>`:''}</div>`).join('')+'</div>';
+}
+function view(){
+ if(!S.me){A.innerHTML=`<header class="hd"><b class="ti">若中 連絡</b></header>`+reg();return}
+ const t=S.topics.find(x=>x.id==S.open);
+ A.innerHTML=`<header class="hd"><div><div class="sm">${e(S.me.name_kanji)} さん</div><b class="ti">若中 連絡</b></div><div class="row" style="margin:0">${S.me.is_admin?'<button class="btn" data-a="adm">管理</button>':''}<button class="btn" data-a="refresh">更新</button></div></header>`+(S.page=='admin'&&S.me.is_admin?adminPage():t?detail(t):S.tab=='c'?cal():S.tab=='n'?nlog():S.tab=='m'?memberView():home())+nav();
+}
+document.addEventListener('click',async ev=>{
+ const b=ev.target.closest('[data-a]');if(!b)return;
+ const a=b.dataset.a,v=b.dataset.v,id=+b.dataset.t||0,g=i=>document.getElementById(i);
+ try{
+  if(a=='mode'){S.mode=v}
+  else if(a=='tag')S.tag=v;
+  else if(a=='open'){S.open=+v;S.flt='';S.page=''}
+  else if(a=='back')S.open=null;
+  else if(a=='flt')S.flt=v;
+  else if(a=='pick')S.pend[id]=v;
+  else if(a=='adm'){S.page=S.page=='admin'?'':'admin'}
+  else if(a=='tab'){S.tab=v;S.open=null;S.page=''}
+  else if(a=='day')S.day=v;
+  else if(a=='fc')S.fc=S.fc?0:1;
+  else if(a=='mo'){const [y,m]=S.cm.split('-').map(Number),d=new Date(y,m-1+ +v,1);S.cm=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');S.day=''}
+  else if(a=='ok'){const r=await db.from('notices').update({dismissed:true}).eq('id',+v);if(bad(r))return;await load();return}
+  else if(a=='mk'){
+   const ti=g('nt').value.trim();if(!ti)return er('タイトルを入力してください');
+   const dl=g('nd').value,ev=g('ne').value,pr=g('nk').value=='practice';if(pr&&!ev)return er('定期練習には開催日が必要です');
+   const r=await db.from('topics').insert({kind:g('nk').value,title:ti,body:g('nb').value,tags:g('ng').value.split(/[,、]/).map(s=>s.trim()).filter(Boolean),deadline:dl?new Date(dl).toISOString():null,event_date:ev||null,start_time:g('ns').value||null,end_time:g('nf').value||null,pinned:g('np').checked,cal_answerable:pr,created_by:S.me.id});
+   if(r.error)return er(r.error.message);S.page='';await load();return;
+  }else if(a=='rec'){
+   const r=await db.rpc('admin_issue_recovery',{p_member:v});if(bad(r))return;
+   g('rc').innerHTML=`<p class="memo"><b>${e(nm(v))}さんのコード: ${e(r.data)}</b><br><span class="sm">24時間有効です。本人に伝えてください。</span></p>`;return;
+  }else if(a=='pin'){
+   const t=S.topics.find(x=>x.id==id);const r=await db.from('topics').update({pinned:!t.pinned}).eq('id',id);
+   if(bad(r))return;await load();return;
+  }else if(a=='calsw'){
+   const r=await db.from('topics').update({cal_answerable:b.checked}).eq('id',id);if(bad(r))return;await load();return;
+  }else if(a=='memoadd'){
+   const x=g('mm').value.trim();if(!x)return;
+   const r=await db.rpc('admin_add_memo',{p_topic:id,p_body:x});if(bad(r))return;await load();return;
+  }else if(a=='dt'){
+   const r=await db.rpc('admin_change_datetime',{p_topic:id,p_date:g('dd').value||null,p_start:g('s1').value||null,p_end:g('e1').value||null});
+   if(bad(r))return;await load();alert('保存しました');return;
+  }else if(a=='aset'){
+   const r=await db.rpc('admin_set_response',{p_topic:id,p_member:g('am').value,p_status:g('as').value,p_detail:g('ad').value.trim()||null});
+   if(bad(r))return;await load();return;
+  }
+  else if(a=='tedit'){
+   const r=await db.rpc('admin_edit_topic',{p_topic:id,p_title:g('et').value,p_body:g('eb').value});
+   if(bad(r))return;await load();alert('保存しました');return;
+  }else if(a=='tdel'){
+   if(!confirm('このトピックを削除します。回答やメモもすべて消え、元に戻せません。よろしいですか？'))return;
+   const r=await db.rpc('admin_delete_topic',{p_topic:id});if(bad(r))return;S.open=null;await load();return;
+  }
+  else if(a=='psave'){
+   const r=await db.rpc('update_my_profile',{p_kanji:g('pk').value,p_kana:g('pn').value,p_age:parseInt(g('pa').value,10)||null,p_bio:g('pb').value});
+   if(bad(r))return;await load();alert('保存しました');return;
+  }else if(a=='mkadm'){
+   const on=b.dataset.x=='1';
+   if(!confirm(nm(v)+'さんを管理者'+(on?'にします。':'から外します。')+'よろしいですか？'))return;
+   const r=await db.rpc('admin_set_admin',{p_member:v,p_value:on});if(bad(r))return;await load();return;
+  }
+  else if(a=='refresh'){await load();return}
+  else if(a=='reg'){
+   const r=await db.rpc('register_member',{p_pass:g('rp').value,p_kanji:g('rk').value,p_kana:g('rn').value,p_age:parseInt(g('rg').value,10)||null});
+   if(r.error)return er(r.error.message);await load();return;
+  }else if(a=='claim'){
+   const r=await db.rpc('claim_member',{p_code:g('cc').value.trim()});
+   if(r.error)return er(r.error.message);await load();return;
+  }else if(a=='submit'){
+   const c=S.pend[id];if(!c)return;let d=null;
+   if(c=='一部参加')d=g('f'+id).value+'～'+g('e'+id).value;
+   else if(c=='その他'){d=g('x'+id).value.trim();if(!d)return alert('内容を入力してください')}
+   const r=await db.rpc('submit_response',{p_topic:id,p_status:c,p_detail:d});
+   if(bad(r))return;delete S.pend[id];await load();return;
+  }
+  view();
+ }catch(x){er(x.message||String(x))}
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.me)load()});
+document.addEventListener('change',ev=>{const f=ev.target.dataset&&ev.target.dataset.f;if(f){S[f]=ev.target.value;view()}});
+boot();
+</script>
+</body>
+</html>
