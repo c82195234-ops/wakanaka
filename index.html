@@ -10,7 +10,7 @@
 :root{--bg:#fff;--fg:#000;--ac:#841D20;--gr:#E4E4E4;box-sizing:border-box}
 @media (prefers-color-scheme:dark){:root{--bg:#000;--fg:#fff;--gr:#2B2B2B}}
 *{box-sizing:border-box}
-body{margin:0 auto;max-width:520px;background:var(--bg);color:var(--fg);font:15px/1.6 "Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0 auto;max-width:520px;background:var(--bg);color:var(--fg);font:15px/1.6 "Noto Sans JP",sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .hd{background:var(--ac);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 18px;display:flex;justify-content:space-between;align-items:flex-end}
 .ti{font:700 24px "Noto Serif JP",serif}
 .sm{font-size:12px}
@@ -36,7 +36,7 @@ textarea,select{font:inherit;color:var(--fg)}
 input[type=text],input[type=time],input[type=password],input[type=date],input[type=datetime-local],textarea,select{width:100%;min-height:44px;border:1px solid var(--fg);background:var(--bg);padding:0 8px;border-radius:6px;margin:4px 0 10px}
 .row input{width:auto;flex:1;min-width:0;margin:0}
 h3{font:700 15px "Noto Serif JP",serif;margin:18px 0 6px;border-bottom:2px solid var(--ac);padding-bottom:2px}
-.li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--fg);padding:4px 0;font-size:14px}
+.li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-bottom:1px solid var(--fg);padding:4px 0;font-size:14px}
 .memo{border-left:4px solid var(--ac);padding:2px 10px;margin:6px 0}
 .note{background:var(--ac);color:#fff;padding:12px;margin-bottom:12px;border-radius:6px}
 .note .btn{background:#fff;color:#000;border-color:#fff}
@@ -48,12 +48,18 @@ h3{font:700 15px "Noto Serif JP",serif;margin:18px 0 6px;border-bottom:2px solid
 i.f{background:var(--ac)}
 i.o{border:2px solid var(--fg)}
 .ic{flex:none;min-width:44px;min-height:44px;border:1px solid var(--fg);background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center}
-.nav{position:sticky;bottom:0;display:flex;background:var(--bg);border-top:2px solid var(--fg)}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;display:flex;background:var(--bg);border-top:2px solid var(--fg);padding-bottom:env(safe-area-inset-bottom,0px);z-index:20}
 .nav button{flex:1;min-height:52px;border:0;background:none;font-weight:700}
 .nav .on{background:var(--ac);color:#fff}
 .adm{background:var(--gr);border-radius:8px;padding:12px;margin-top:24px}
 .ac{background:var(--bg);border:1px solid var(--fg);border-radius:6px;padding:12px;margin-top:12px}
 .day.sel{background:var(--ac);color:#fff}
+.ac>b:first-child{display:block;margin-bottom:6px}
+input[type=checkbox]{accent-color:var(--ac);width:20px;height:20px;vertical-align:middle}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:24px;font-weight:700;z-index:50;max-width:90%;text-align:center}
+.toast.bad{background:var(--ac);color:#fff}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.dlg{background:var(--bg);color:var(--fg);border:2px solid var(--fg);border-radius:8px;padding:16px;max-width:360px;width:100%}
 #er{color:var(--ac);font-weight:700;min-height:1.6em}
 </style>
 </head>
@@ -68,6 +74,8 @@ const A=document.getElementById('app');
 const S={ap:'',pick:[],nkind:'attend',pedit:0,tab:'h',cm:(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})(),day:'',fm:'',ft:'',fc:0,notices:[],log:[],me:null,uid:null,members:[],topics:[],resp:[],memos:[],tag:'',open:null,pend:{},flt:'',mode:'reg'};S.pm=S.cm;
 const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const er=m=>{const x=document.getElementById('er');if(x)x.textContent=m||''};
+function toast(m,bad){const d=document.createElement('div');d.className='toast'+(bad?' bad':'');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+function ask(m){return new Promise(res=>{const o=document.createElement('div');o.className='mask';o.innerHTML='<div class="dlg"><p style="white-space:pre-wrap"></p><div class="row"><button class="btn" data-k="0">キャンセル</button><button class="btn on" data-k="1">OK</button></div></div>';o.querySelector('p').textContent=m;o.onclick=ev=>{const k=ev.target.dataset&&ev.target.dataset.k;if(k!==undefined){o.remove();res(k=='1')}};document.body.appendChild(o)})}
 const dtm=s=>new Date(s).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 const evt=t=>t.event_date?`${+t.event_date.slice(5,7)}/${+t.event_date.slice(8,10)}${t.start_time?' '+t.start_time.slice(0,5)+'～'+(t.end_time||'').slice(0,5):''}`:'';
 const gp=r=>['参加','一部参加','終了次第参加'].includes(r.status)?'参加':r.status=='不参加'?'不参加':'他';
@@ -100,7 +108,7 @@ function home(){
  const chips=['',...tags].map(g=>`<button class="chip ${S.tag===g?'on':''}" data-a="tag" data-v="${e(g)}">${g?e(g):'すべて'}</button>`).join('');
  const L=S.topics.filter(x=>x.kind!='practice'&&(!S.tag||(x.tags||[]).includes(S.tag))).sort((a,b)=>b.pinned-a.pinned);
  return `<div class="p">${notes()}<div class="chips">${chips}</div>`+(L.map(x=>{const m=mine(x);
-  return `<div class="card" data-a="open" data-v="${x.id}">${x.pinned?'<span class="pin">固定</span>':''}<span class="tg k">${x.kind=='info'?'連絡':'出欠'}</span>${(x.tags||[]).map(g=>`<span class="tg">${e(g)}</span>`).join('')}<div class="ct">${e(x.title)}</div>${x.event_date?`<div class="sm">開催 ${evt(x)}</div>`:''}<div class="sm">${x.deadline?'回答期限 '+dtm(x.deadline)+'　':''}${ansOf(x).length}/${S.members.filter(y=>y.active).length}人が回答</div><span class="st ${m?'':'ng'}">${m?'あなた: '+e(m.status):'未回答'}</span></div>`}).join('')||'<p>トピックはまだありません。</p>')+'</div>';
+  return `<div class="card" data-a="open" data-v="${x.id}">${x.pinned?'<span class="pin">固定</span>':''}<span class="tg k">${x.kind=='info'?'連絡':'出欠'}</span>${(x.tags||[]).map(g=>`<span class="tg">${e(g)}</span>`).join('')}<div class="ct">${e(x.title)}</div>${x.event_date?`<div class="sm">開催 ${evt(x)}</div>`:''}<div class="sm">${x.deadline?'回答期限 '+dtm(x.deadline)+'　':''}${ansOf(x).length}/${S.members.filter(y=>y.active&&!y.resting).length}人が回答</div><span class="st ${m?'':'ng'}">${m?'あなた: '+e(m.status):'未回答'}</span></div>`}).join('')||'<p>トピックはまだありません。</p>')+'</div>';
 }
 function ui(t){
  const m=mine(t);
@@ -117,13 +125,16 @@ function detail(t){
  const an=ansOf(t),n=k=>an.filter(x=>gp(x)==k).length;
  const fl=t.kind!='info'?'<div class="chips">'+[['','すべて',an.length],['参加','参加',n('参加')],['不参加','不参加',n('不参加')]].map(c=>`<button class="chip ${S.flt===c[0]?'on':''}" data-a="flt" data-v="${c[0]}">${c[1]} ${c[2]}</button>`).join('')+'</div>':'';
  const rows=an.filter(x=>!S.flt||gp(x)==S.flt).map(x=>{const m=S.members.find(y=>y.id==x.member_id);return `<div class="li"><span>${e(m?m.name_kanji:'?')}${m&&m.age?'（'+m.age+'歳）':''}</span><b>${e(x.status+(x.detail?' '+x.detail:''))}</b></div>`}).join('');
- const no=S.members.filter(m=>m.active&&!an.some(x=>x.member_id==m.id)).map(m=>e(m.name_kanji)).join('、')||'なし';
+ const no=S.members.filter(m=>m.active&&!m.resting&&!an.some(x=>x.member_id==m.id)).map(m=>e(m.name_kanji)).join('、')||'なし';
  const memo=S.memos.filter(x=>x.topic_id==t.id).map(y=>`<div class="memo"><div class="sm">${dtm(y.created_at)} 追記</div>${e(y.body)}</div>`).join('')||'<p class="sm">まだありません。</p>';
- return `<div class="p"><button class="btn" data-a="back">戻る</button><div class="ct">${e(t.title)}</div>${t.event_date?`<div class="sm">開催 ${evt(t)}</div>`:''}<div class="sm">${t.deadline?'回答期限 '+dtm(t.deadline)+'（期限まで変更できます）':'回答期限なし'}</div><p style="white-space:pre-wrap">${e(t.body)}</p>
- <h3>あなたの回答</h3>${ui(t)}<h3>未回答の人</h3><p>${no}</p><h3>回答一覧</h3>${fl}${rows||'<p class="sm">まだありません。</p>'}<h3>追加情報</h3>${memo}<h3>メモ</h3>${t.notes?`<div class="memo" style="white-space:pre-wrap">${e(t.notes)}</div>`:'<p class="sm">まだありません。</p>'}${S.me.is_admin?adm(t):''}</div>`;
+ const card=(h,b)=>`<div class="ac"><b>${h}</b>${b}</div>`;
+ const none='<p class="sm">まだありません。</p>';
+ return `<div class="p"><button class="btn" data-a="back">戻る</button>
+ <div class="ac"><span class="tg k">${t.kind=='info'?'連絡':t.kind=='practice'?'定期':'出欠'}</span>${(t.tags||[]).map(g=>`<span class="tg">${e(g)}</span>`).join('')}<div class="ct">${e(t.title)}</div>${t.event_date?`<div class="sm">開催 ${evt(t)}</div>`:''}<div class="sm">${t.deadline?'回答期限 '+dtm(t.deadline)+'（期限まで変更できます）':'回答期限なし'}</div><p style="white-space:pre-wrap;margin-bottom:0">${e(t.body)}</p></div>
+ ${card('あなたの回答',ui(t))}${card('未回答の人',`<p style="margin:0">${no}</p>`)}${card('回答一覧',fl+(rows||none))}${card('追加情報',memo)}${card('メモ',t.notes?`<div class="memo" style="white-space:pre-wrap">${e(t.notes)}</div>`:none)}${S.me.is_admin?adm(t):''}</div>`;
 }
 function notes(){
- return S.notices.map(n=>`<div class="note"><b>お知らせ</b><div style="white-space:pre-wrap">${e(n.message)}</div><div class="row"><button class="btn" data-a="open" data-v="${n.topic_id}">回答を見直す</button><button class="btn" data-a="ok" data-v="${n.id}">確認した</button></div></div>`).join('');
+ return S.notices.map(n=>`<div class="note"><b>お知らせ</b><div style="white-space:pre-wrap">${e(n.message)}</div><div class="row">${n.topic_id?`<button class="btn" data-a="open" data-v="${n.topic_id}">回答を見直す</button>`:''}<button class="btn" data-a="ok" data-v="${n.id}">確認した</button></div></div>`).join('');
 }
 function cal(){
  const [y,mo]=S.cm.split('-').map(Number),f=new Date(y,mo-1,1).getDay(),dim=new Date(y,mo,0).getDate();
@@ -148,7 +159,7 @@ function nlog(){
  return `<div class="p"><h3>通知一覧</h3><select data-f="fm">${mo}</select><select data-f="ft">${to}</select><button class="chip ${S.fc?'on':''}" data-a="fc">変更のみ</button><div style="margin-top:8px">`+(L.map(l=>`<div class="li"><span>${ch.includes(l.kind)?'<span class="pin">変更</span>':''}${e(msg(l))}</span><span class="sm">${dtm(l.created_at)}</span></div>`).join('')||'<p class="sm">まだありません。</p>')+'</div></div>';
 }
 const nav=()=>`<nav class="nav">${[['h','ホーム'],['c','カレンダー'],['n','通知'],['m','メンバー']].map(c=>`<button class="${S.tab==c[0]&&!S.open&&S.page!='admin'?'on':''}" data-a="tab" data-v="${c[0]}">${c[1]}</button>`).join('')}</nav>`;
-const bad=r=>{if(r.error){alert(r.error.message);return true}};
+const bad=r=>{if(r.error){toast(r.error.message,1);return true}};
 const loc=iso=>{if(!iso)return '';const d=new Date(iso);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)};
 function pickCal(){
  const [y,mo]=S.pm.split('-').map(Number),f=new Date(y,mo-1,1).getDay(),dim=new Date(y,mo,0).getDate();
@@ -175,17 +186,18 @@ function createForm(){
 }
 function memberAdmin(){
  const L=S.members.filter(m=>m.active);
- return `<div class="ac"><b>メンバーの管理（${L.length}人）</b>`+L.map(m=>`<div class="li"><span>${e(m.name_kanji)}${m.age?'（'+m.age+'歳）':''}${m.is_admin?' <span class="pin">管理者</span>':''}</span><span class="row" style="margin:0"><button class="btn" data-a="mkadm" data-v="${m.id}" data-x="${m.is_admin?0:1}">${m.is_admin?'管理者を外す':'管理者にする'}</button><button class="btn" data-a="rec" data-v="${m.id}">再ログイン用コード</button></span></div>`).join('')+'<div id="rc"></div></div>';
+ return `<div class="ac"><b>メンバーの管理（${L.length}人）</b>`+L.map(m=>`<div class="li"><span>${e(m.name_kanji)}${m.age?'（'+m.age+'歳）':''}${m.is_admin?' <span class="pin">管理者</span>':''}${m.resting?' <span class="tg">今年は不参加</span>':''}</span><span class="row" style="margin:0"><button class="btn" data-a="mkadm" data-v="${m.id}" data-x="${m.is_admin?0:1}">${m.is_admin?'管理者を外す':'管理者にする'}</button><button class="btn" data-a="rest" data-v="${m.id}" data-x="${m.resting?0:1}">${m.resting?'参加に戻す':'今年は不参加にする'}</button><button class="btn" data-a="rec" data-v="${m.id}">再ログイン用コード</button></span></div>`).join('')+'<div id="rc"></div></div>';
 }
+const noticeForm=()=>`<div class="ac"><b>お知らせを作る</b><span class="sm">ホームの一番上に表示されます（通知一覧には記録されません）。「今年は不参加」の人には届きません。</span><textarea id="an" rows="4" placeholder="お知らせの内容"></textarea><button class="btn on" data-a="anc">お知らせを送る</button></div>`;
 function adminPage(){
  const b=(v,t)=>`<button class="btn ${S.ap==v?'on':''}" data-a="ap" data-v="${v}">${t}</button>`;
- return `<div class="p"><button class="btn" data-a="adm">ホームに戻る</button><h3>管理者ページ</h3><div class="row">${b('create','トピック作成')}${b('members','メンバー管理')}</div>${S.ap=='create'?createForm():S.ap=='members'?memberAdmin():'<p class="sm">上のボタンから開いてください。</p>'}</div>`;
+ return `<div class="p"><button class="btn" data-a="adm">ホームに戻る</button><h3>管理者ページ</h3><div class="row">${b('create','トピック作成')}${b('members','メンバー管理')}${b('notice','お知らせ作成')}</div>${S.ap=='create'?createForm():S.ap=='members'?memberAdmin():S.ap=='notice'?noticeForm():'<p class="sm">上のボタンから開いてください。</p>'}</div>`;
 }
 function adm(t){
  const opts=S.members.filter(m=>m.active).map(m=>`<option value="${m.id}">${e(m.name_kanji)}</option>`).join('');
  const st=['参加','不参加','一部参加','終了次第参加','その他','見た'].map(v=>`<option>${v}</option>`).join('');
  return `<div class="adm"><h3 style="margin-top:0">管理者メニュー</h3>
- <div class="ac"><b>タイトル・本文の修正</b><input type="text" id="et" value="${e(t.title)}"><textarea id="eb" rows="4">${e(t.body)}</textarea><button class="btn on" data-a="tedit" data-t="${t.id}">修正を保存</button></div>
+ <div class="ac"><b>タイトル・本文・タグの修正</b><input type="text" id="et" value="${e(t.title)}"><textarea id="eb" rows="4">${e(t.body)}</textarea>タグ（カンマ区切り）<input type="text" id="etg" value="${e((t.tags||[]).join(','))}"><button class="btn on" data-a="tedit" data-t="${t.id}">修正を保存</button></div>
  <div class="ac"><b>表示の設定</b><div class="row"><button class="btn" data-a="pin" data-t="${t.id}">${t.pinned?'固定を外す':'ホーム上部に固定'}</button><label class="sm"><input type="checkbox" data-a="calsw" data-t="${t.id}" ${t.cal_answerable?'checked':''}> カレンダーから直接回答</label></div></div>
  <div class="ac"><b>追加情報の追記</b>（全員にお知らせが出ます）<div class="row"><input type="text" id="mm" placeholder="追加情報を入力"><button class="btn on" data-a="memoadd" data-t="${t.id}">追記</button></div></div>
  <div class="ac"><b>メモ</b>（決まったこと・進捗など。お知らせには出ず、通知一覧に記録されます）<textarea id="nm2" rows="4">${e(t.notes||'')}</textarea><button class="btn on" data-a="nsave" data-t="${t.id}">メモを保存</button></div>
@@ -197,8 +209,8 @@ function adm(t){
 }
 function memberView(){
  const me=S.me,L=S.members.filter(m=>m.active).sort((a,b)=>((b.age||-1)-(a.age||-1))||(a.name_kana||'').localeCompare(b.name_kana||'','ja'));
- const form=S.pedit?`<div class="card" style="cursor:default;margin-top:10px"><b>プロフィールの編集</b>名前（漢字）<input type="text" id="pk" value="${e(me.name_kanji)}">名前（ひらがな）<input type="text" id="pn" value="${e(me.name_kana)}">年齢<input type="text" inputmode="numeric" id="pa" value="${me.age||''}">一言メモ（任意・100文字まで）<input type="text" id="pb" maxlength="100" value="${e(me.bio||'')}"><button class="btn on" data-a="psave">保存する</button> <button class="btn" data-a="pedit">キャンセル</button></div>`:'';
- return `<div class="p"><button class="btn on" data-a="pedit">${S.pedit?'編集を閉じる':'自分のプロフィールを編集する'}</button>${form}<h3>メンバー（${L.length}人・年齢順）</h3>`+L.map(m=>`<div class="card" style="cursor:default"><b>${e(m.name_kanji)}</b> <span class="sm">${e(m.name_kana)}</span>${m.age?` <span class="sm">${m.age}歳</span>`:''}${m.is_admin?' <span class="pin">管理者</span>':''}${m.bio?`<div class="sm" style="white-space:pre-wrap">${e(m.bio)}</div>`:''}</div>`).join('')+'</div>';
+ const form=S.pedit?`<div class="card" style="cursor:default;margin-top:10px"><b>プロフィールの編集</b>名前（漢字）<input type="text" id="pk" value="${e(me.name_kanji)}">名前（ひらがな）<input type="text" id="pn" value="${e(me.name_kana)}">年齢<input type="text" inputmode="numeric" id="pa" value="${me.age||''}">一言メモ（任意・100文字まで）<input type="text" id="pb" maxlength="100" value="${e(me.bio||'')}"><label class="sm"><input type="checkbox" id="pr" ${me.resting?'checked':''}> 今年は不参加（未回答者の一覧などに出なくなります）</label><br><button class="btn on" data-a="psave">保存する</button> <button class="btn" data-a="pedit">キャンセル</button></div>`:'';
+ return `<div class="p"><button class="btn on" data-a="pedit">${S.pedit?'編集を閉じる':'自分のプロフィールを編集する'}</button>${form}<h3>メンバー（${L.length}人・年齢順）</h3>`+L.map(m=>`<div class="card" style="cursor:default"><b>${e(m.name_kanji)}</b> <span class="sm">${e(m.name_kana)}</span>${m.age?` <span class="sm">${m.age}歳</span>`:''}${m.is_admin?' <span class="pin">管理者</span>':''}${m.resting?' <span class="tg">今年は不参加</span>':''}${m.bio?`<div class="sm" style="white-space:pre-wrap">${e(m.bio)}</div>`:''}</div>`).join('')+'</div>';
 }
 function view(){
  if(!S.me){A.innerHTML=`<header class="hd"><b class="ti">若中 連絡</b></header>`+reg();return}
@@ -236,7 +248,7 @@ document.addEventListener('click',async ev=>{
     rows=[{...base,event_date:ev||null,deadline:dl?new Date(dl).toISOString():null,pinned:g('np').checked,cal_answerable:false}];
    }
    const r=await db.from('topics').insert(rows);if(r.error)return er(r.error.message);
-   S.pick=[];S.ap='';S.page='';await load();alert(rows.length+'件作成しました');return;
+   S.pick=[];S.ap='';S.page='';await load();toast(rows.length+'件作成しました');return;
   }else if(a=='rec'){
    const r=await db.rpc('admin_issue_recovery',{p_member:v});if(bad(r))return;
    g('rc').innerHTML=`<p class="memo"><b>${e(nm(v))}さんのコード: ${e(r.data)}</b><br><span class="sm">24時間有効です。本人に伝えてください。</span></p>`;return;
@@ -247,42 +259,48 @@ document.addEventListener('click',async ev=>{
    const r=await db.from('topics').update({cal_answerable:b.checked}).eq('id',id);if(bad(r))return;await load();return;
   }else if(a=='memoadd'){
    const x=g('mm').value.trim();if(!x)return;
-   const r=await db.rpc('admin_add_memo',{p_topic:id,p_body:x});if(bad(r))return;await load();return;
+   const r=await db.rpc('admin_add_memo',{p_topic:id,p_body:x});if(bad(r))return;await load();toast('追加情報を追記しました');return;
   }else if(a=='dt'){
    const r=await db.rpc('admin_change_datetime',{p_topic:id,p_date:g('dd').value||null,p_start:g('s1').value||null,p_end:g('e1').value||null});
-   if(bad(r))return;await load();alert('保存しました');return;
+   if(bad(r))return;await load();toast('保存しました');return;
   }else if(a=='aset'){
    const r=await db.rpc('admin_set_response',{p_topic:id,p_member:g('am').value,p_status:g('as').value,p_detail:g('ad').value.trim()||null});
    if(bad(r))return;await load();return;
   }
   else if(a=='tedit'){
-   const r=await db.rpc('admin_edit_topic',{p_topic:id,p_title:g('et').value,p_body:g('eb').value});
-   if(bad(r))return;await load();alert('保存しました');return;
+   const r=await db.rpc('admin_edit_topic',{p_topic:id,p_title:g('et').value,p_body:g('eb').value,p_tags:g('etg').value.split(/[,、]/).map(s=>s.trim()).filter(Boolean)});
+   if(bad(r))return;await load();toast('保存しました');return;
   }else if(a=='tdel'){
-   if(!confirm('このトピックを削除します。回答やメモもすべて消え、元に戻せません。よろしいですか？'))return;
+   if(!await ask('このトピックを削除します。回答やメモもすべて消え、元に戻せません。よろしいですか？'))return;
    const r=await db.rpc('admin_delete_topic',{p_topic:id});if(bad(r))return;S.open=null;await load();return;
   }
   else if(a=='ap')S.ap=S.ap==v?'':v;
+  else if(a=='rest'){const r=await db.rpc('set_resting',{p_member:v,p_value:b.dataset.x=='1'});if(bad(r))return;await load();toast('変更しました');return}
+  else if(a=='anc'){
+   const x=g('an').value.trim();if(!x)return toast('内容を入力してください',1);
+   if(!await ask('全メンバーのホームにお知らせを出します。よろしいですか？'))return;
+   const r=await db.rpc('admin_create_announcement',{p_body:x});if(bad(r))return;S.ap='';await load();toast('お知らせを送りました');return;
+  }
   else if(a=='pm'){const [y,m]=S.pm.split('-').map(Number),d=new Date(y,m-1+ +v,1);S.pm=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
   else if(a=='pd')S.pick=S.pick.includes(v)?S.pick.filter(x=>x!=v):[...S.pick,v];
   else if(a=='pedit')S.pedit=S.pedit?0:1;
-  else if(a=='nsave'){const r=await db.rpc('admin_set_notes',{p_topic:id,p_notes:g('nm2').value});if(bad(r))return;await load();alert('保存しました');return}
-  else if(a=='dlsave'){const x=g('dl').value;const r=await db.rpc('admin_change_deadline',{p_topic:id,p_deadline:x?new Date(x).toISOString():null});if(bad(r))return;await load();alert('保存しました');return}
+  else if(a=='nsave'){const r=await db.rpc('admin_set_notes',{p_topic:id,p_notes:g('nm2').value});if(bad(r))return;await load();toast('保存しました');return}
+  else if(a=='dlsave'){const x=g('dl').value;const r=await db.rpc('admin_change_deadline',{p_topic:id,p_deadline:x?new Date(x).toISOString():null});if(bad(r))return;await load();toast('保存しました');return}
   else if(a=='dup'){
    const s=S.topics.find(x=>x.id==id),nd=g('cd').value;
-   if(!nd&&s.kind=='practice')return alert('複製先の日付を選んでください');
+   if(!nd&&s.kind=='practice')return toast('複製先の日付を選んでください',1);
    let dl=null;
    if(s.event_date&&nd&&s.deadline){dl=new Date(new Date(nd+'T00:00:00').getTime()+(new Date(s.deadline)-new Date(s.event_date+'T00:00:00'))).toISOString()}
    else if(!s.event_date)dl=s.deadline;
    const r=await db.from('topics').insert({kind:s.kind,title:s.title,body:s.body,tags:s.tags,start_time:s.start_time,end_time:s.end_time,event_date:nd||null,deadline:dl,cal_answerable:s.cal_answerable,pinned:false,created_by:S.me.id});
-   if(bad(r))return;await load();alert('複製しました'+(nd?'（'+nd+'）':''));return;
+   if(bad(r))return;await load();toast('複製しました'+(nd?'（'+nd+'）':''));return;
   }
   else if(a=='psave'){
    const r=await db.rpc('update_my_profile',{p_kanji:g('pk').value,p_kana:g('pn').value,p_age:parseInt(g('pa').value,10)||null,p_bio:g('pb').value});
-   if(bad(r))return;S.pedit=0;await load();alert('保存しました');return;
+   if(bad(r))return;const r2=await db.rpc('set_resting',{p_member:S.me.id,p_value:g('pr').checked});if(bad(r2))return;S.pedit=0;await load();toast('保存しました');return;
   }else if(a=='mkadm'){
    const on=b.dataset.x=='1';
-   if(!confirm(nm(v)+'さんを管理者'+(on?'にします。':'から外します。')+'よろしいですか？'))return;
+   if(!await ask(nm(v)+'さんを管理者'+(on?'にします。':'から外します。')+'よろしいですか？'))return;
    const r=await db.rpc('admin_set_admin',{p_member:v,p_value:on});if(bad(r))return;await load();return;
   }
   else if(a=='refresh'){await load();return}
@@ -295,9 +313,9 @@ document.addEventListener('click',async ev=>{
   }else if(a=='submit'){
    const c=S.pend[id];if(!c)return;let d=null;
    if(c=='一部参加')d=g('f'+id).value+'～'+g('e'+id).value;
-   else if(c=='その他'){d=g('x'+id).value.trim();if(!d)return alert('内容を入力してください')}
+   else if(c=='その他'){d=g('x'+id).value.trim();if(!d)return toast('内容を入力してください',1)}
    const r=await db.rpc('submit_response',{p_topic:id,p_status:c,p_detail:d});
-   if(bad(r))return;delete S.pend[id];await load();return;
+   if(bad(r))return;delete S.pend[id];await load();toast('回答を送信しました');return;
   }
   view();
  }catch(x){er(x.message||String(x))}
